@@ -5,6 +5,9 @@
         <page name='FactoryMethod'/>
         <page name='AbstractFactory'/>
         <page name='Builder'/>
+        <page name='Prototype'/>
+        <page name='Singleton'/>
+        <page name='Adapter'/>
         <page name='Bridge'/>
         <page name='Composite'/>
         <page name='Decorator'/>
@@ -12,8 +15,11 @@
         <page name='Flyweight'/>
         <page name='ChainOfResponsibility'/>
         <page name='Command'/>
+        <page name='Mediator'/>
+        <page name='Observer'/>
         <page name='State'/>
         <page name='Strategy'/>
+        <page name='Visitor'/>
         <page name='Repository'/>
     </pages>
 </playground>
