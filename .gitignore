@@ -1,0 +1,7 @@
+# macOS
+.DS_Store
+
+# Xcode / Playground - estado de UI e dados por usuário
+xcuserdata/
+*.xcuserstate
+playground.xcworkspace/xcuserdata/
