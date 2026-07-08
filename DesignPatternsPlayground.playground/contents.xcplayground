@@ -15,6 +15,5 @@
         <page name='State'/>
         <page name='Strategy'/>
         <page name='Repository'/>
-        <page name='Exercices'/>
     </pages>
 </playground>
