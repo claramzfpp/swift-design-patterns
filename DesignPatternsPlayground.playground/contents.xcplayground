@@ -15,10 +15,13 @@
         <page name='Flyweight'/>
         <page name='ChainOfResponsibility'/>
         <page name='Command'/>
+        <page name='Iterator'/>
         <page name='Mediator'/>
+        <page name='Memento'/>
         <page name='Observer'/>
         <page name='State'/>
         <page name='Strategy'/>
+        <page name='TemplateMethod'/>
         <page name='Visitor'/>
         <page name='Repository'/>
     </pages>

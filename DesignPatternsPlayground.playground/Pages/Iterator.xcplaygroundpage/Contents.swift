@@ -1,197 +1,218 @@
 //: [Previous](@previous)
 
-//Before
+import Foundation
 
-// Problema 1: estrutura interna exposta — qualquer um pode fazer playlist.musicas[i]
+/*
+ Iterator Pattern — fornece uma forma de percorrer os elementos de uma coleção
+ sem expor sua estrutura interna.
+ Problema que resolve: elimina o acoplamento do cliente ao formato interno da coleção
+ (array, lista, etc.) e evita duplicar a lógica de travessia em vários lugares.
+*/
+
+// ========================================================
+// ANTES — sem o pattern (o problema)
+// ========================================================
+// Problema 1: estrutura interna exposta — qualquer um pode fazer playlist.songs[i]
 // Problema 2: lógica de travessia misturada com lógica de negócio
 // Problema 3: se mudar de array para outra estrutura, quebra tudo
 
 class PlaylistBefore {
-    var musicas: [String] = [] // exposto — qualquer um acessa e modifica
-    var artistas: [String] = []
-    var duracoes: [Double] = []
+    var songs: [String] = [] // exposto — qualquer um acessa e modifica
+    var artists: [String] = []
+    var durations: [Double] = []
 }
 
-class PlayerMusicaBefore {
-    func tocarTodas(playlist: PlaylistBefore) {
+class MusicPlayerBefore {
+    func playAll(playlist: PlaylistBefore) {
         // cliente acoplado ao array — sabe que é array, usa índice
-        for i in 0..<playlist.musicas.count {
-            print("Tocando: \(playlist.musicas[i]) - \(playlist.artistas[i])")
+        for i in 0..<playlist.songs.count {
+            print("Tocando: \(playlist.songs[i]) - \(playlist.artists[i])")
         }
     }
-    
-    func tocarReverso(playlist: PlaylistBefore) {
+
+    func playReverse(playlist: PlaylistBefore) {
         // duplica a lógica de travessia — agora em dois lugares
-        var i = playlist.musicas.count - 1
+        var i = playlist.songs.count - 1
         while i >= 0 {
-            print("Tocando: \(playlist.musicas[i])")
+            print("Tocando: \(playlist.songs[i])")
             i -= 1
         }
     }
-    
-    func tocarFiltrado(playlist: PlaylistBefore, artista: String) {
+
+    func playFiltered(playlist: PlaylistBefore, artist: String) {
         // mais uma travessia duplicada
-        for i in 0..<playlist.musicas.count {
-            if playlist.artistas[i] == artista {
-                print("Tocando: \(playlist.musicas[i])")
+        for i in 0..<playlist.songs.count {
+            if playlist.artists[i] == artist {
+                print("Tocando: \(playlist.songs[i])")
             }
         }
     }
 }
 
-//Três problemas claros: estrutura interna exposta, lógica de travessia duplicada em três métodos, e cliente completamente acoplado ao array.
+// Três problemas claros: estrutura interna exposta, lógica de travessia duplicada
+// em três métodos, e cliente completamente acoplado ao array.
 
-//After
+///--------------------------------------------------------------------------------------------------------------------------
+
+// ========================================================
+// DEPOIS — com o Iterator Pattern
+// ========================================================
 
 // 1. O modelo
-struct Musica {
-    let titulo: String
-    let artista: String
-    let duracao: Double
+struct Song {
+    let title: String
+    let artist: String
+    let duration: Double
 }
 
 // 2. O protocolo do Iterator
-protocol MusicaIterator {
-    func temProximo() -> Bool
-    func proximo() -> Musica
-    func resetar()
+protocol SongIterator {
+    func hasNext() -> Bool
+    func next() -> Song
+    func reset()
 }
 
 // 3. Iterators concretos — cada um encapsula uma forma de percorrer
 
-class IteratorNormal: MusicaIterator {
-    private let musicas: [Musica]
-    private var indice = 0
-    
-    init(musicas: [Musica]) { self.musicas = musicas }
-    
-    func temProximo() -> Bool { return indice < musicas.count }
-    func proximo() -> Musica { let m = musicas[indice]; indice += 1; return m }
-    func resetar() { indice = 0 }
+class NormalIterator: SongIterator {
+    private let songs: [Song]
+    private var index = 0
+
+    init(songs: [Song]) { self.songs = songs }
+
+    func hasNext() -> Bool { return index < songs.count }
+    func next() -> Song { let song = songs[index]; index += 1; return song }
+    func reset() { index = 0 }
 }
 
-class IteratorReverso: MusicaIterator {
-    private let musicas: [Musica]
-    private var indice: Int
-    
-    init(musicas: [Musica]) {
-        self.musicas = musicas
-        self.indice = musicas.count - 1
+class ReverseIterator: SongIterator {
+    private let songs: [Song]
+    private var index: Int
+
+    init(songs: [Song]) {
+        self.songs = songs
+        self.index = songs.count - 1
     }
-    
-    func temProximo() -> Bool { return indice >= 0 }
-    func proximo() -> Musica { let m = musicas[indice]; indice -= 1; return m }
-    func resetar() { indice = musicas.count - 1 }
+
+    func hasNext() -> Bool { return index >= 0 }
+    func next() -> Song { let song = songs[index]; index -= 1; return song }
+    func reset() { index = songs.count - 1 }
 }
 
-class IteratorAleatorio: MusicaIterator {
-    private var musicas: [Musica]
-    private var indice = 0
-    
-    init(musicas: [Musica]) { self.musicas = musicas.shuffled() }
-    
-    func temProximo() -> Bool { return indice < musicas.count }
-    func proximo() -> Musica { let m = musicas[indice]; indice += 1; return m }
-    func resetar() { musicas = musicas.shuffled(); indice = 0 }
+class ShuffleIterator: SongIterator {
+    private var songs: [Song]
+    private var index = 0
+
+    init(songs: [Song]) { self.songs = songs.shuffled() }
+
+    func hasNext() -> Bool { return index < songs.count }
+    func next() -> Song { let song = songs[index]; index += 1; return song }
+    func reset() { songs = songs.shuffled(); index = 0 }
 }
 
 // 4. A coleção — estrutura interna completamente escondida
 class Playlist {
-    private var musicas: [Musica] = [] // privado — ninguém acessa diretamente
-    
-    func adicionar(_ musica: Musica) { musicas.append(musica) }
-    
-    func iteratorNormal() -> MusicaIterator { return IteratorNormal(musicas: musicas) }
-    func iteratorReverso() -> MusicaIterator { return IteratorReverso(musicas: musicas) }
-    func iteratorAleatorio() -> MusicaIterator { return IteratorAleatorio(musicas: musicas) }
+    private var songs: [Song] = [] // privado — ninguém acessa diretamente
+
+    func add(_ song: Song) { songs.append(song) }
+
+    func normalIterator() -> SongIterator { return NormalIterator(songs: songs) }
+    func reverseIterator() -> SongIterator { return ReverseIterator(songs: songs) }
+    func shuffleIterator() -> SongIterator { return ShuffleIterator(songs: songs) }
 }
 
 // 5. Cliente — não sabe nada sobre a estrutura interna
-class PlayerMusica {
-    func tocar(iterator: MusicaIterator) {
-        while iterator.temProximo() {
-            let musica = iterator.proximo()
-            print("▶️ \(musica.titulo) — \(musica.artista)")
+class MusicPlayer {
+    func play(iterator: SongIterator) {
+        while iterator.hasNext() {
+            let song = iterator.next()
+            print("\(song.title) — \(song.artist)")
         }
     }
 }
 
 // Uso
 let playlist = Playlist()
-playlist.adicionar(Musica(titulo: "Bohemian Rhapsody", artista: "Queen", duracao: 354))
-playlist.adicionar(Musica(titulo: "Hotel California", artista: "Eagles", duracao: 391))
-playlist.adicionar(Musica(titulo: "Stairway to Heaven", artista: "Led Zeppelin", duracao: 482))
+playlist.add(Song(title: "Bohemian Rhapsody", artist: "Queen", duration: 354))
+playlist.add(Song(title: "Hotel California", artist: "Eagles", duration: 391))
+playlist.add(Song(title: "Stairway to Heaven", artist: "Led Zeppelin", duration: 482))
 
-let player = PlayerMusica()
+let player = MusicPlayer()
 
 print("--- Normal ---")
-player.tocar(iterator: playlist.iteratorNormal())
+player.play(iterator: playlist.normalIterator())
 
 print("--- Reverso ---")
-player.tocar(iterator: playlist.iteratorReverso())
+player.play(iterator: playlist.reverseIterator())
 
 print("--- Aleatório ---")
-player.tocar(iterator: playlist.iteratorAleatorio())
+player.play(iterator: playlist.shuffleIterator())
 
-//-----------------------------------------------
+///--------------------------------------------------------------------------------------------------------------------------
 
-// Iterator + Strategy, as vezes podem andar juntos
+// ========================================================
+// BÔNUS: Iterator + Strategy juntos
+// ========================================================
+// Iterator e Strategy às vezes andam juntos: um decide COMO percorrer,
+// o outro decide O QUE fazer com cada elemento.
 
 // Strategy — define o que fazer com cada música
-protocol EstrategiaReproducao {
-    func reproduzir(musica: Musica)
+protocol PlaybackStrategy {
+    func play(song: Song)
 }
 
-class ReproducaoNormal: EstrategiaReproducao {
-    func reproduzir(musica: Musica) {
-        print("▶️ Tocando: \(musica.titulo)")
+class NormalPlayback: PlaybackStrategy {
+    func play(song: Song) {
+        print("Tocando: \(song.title)")
     }
 }
 
-class ReproducaoComCrossfade: EstrategiaReproducao {
-    func reproduzir(musica: Musica) {
-        print("🎚 Crossfade → \(musica.titulo)")
+class CrossfadePlayback: PlaybackStrategy {
+    func play(song: Song) {
+        print("Crossfade → \(song.title)")
     }
 }
 
-class PreCarregamento: EstrategiaReproducao {
-    func reproduzir(musica: Musica) {
-        print("⬇️ Pré-carregando: \(musica.titulo) (\(musica.duracao)s)")
+class Preload: PlaybackStrategy {
+    func play(song: Song) {
+        print("Pré-carregando: \(song.title) (\(song.duration)s)")
     }
 }
 
 // Player usa Iterator (como percorrer) + Strategy (o que fazer com cada música)
-class PlayerMusicaV2 {
-    private var estrategia: EstrategiaReproducao
-    
-    init(estrategia: EstrategiaReproducao) {
-        self.estrategia = estrategia
+class MusicPlayerV2 {
+    private var strategy: PlaybackStrategy
+
+    init(strategy: PlaybackStrategy) {
+        self.strategy = strategy
     }
-    
-    func trocarEstrategia(_ nova: EstrategiaReproducao) {
-        self.estrategia = nova
+
+    func changeStrategy(_ new: PlaybackStrategy) {
+        self.strategy = new
     }
-    
+
     // Iterator decide a ordem — Strategy decide o que fazer com cada música
-    func tocar(iterator: MusicaIterator) {
-        while iterator.temProximo() {
-            let musica = iterator.proximo()
-            estrategia.reproduzir(musica: musica) // delega para a estratégia
+    func play(iterator: SongIterator) {
+        while iterator.hasNext() {
+            let song = iterator.next()
+            strategy.play(song: song) // delega para a estratégia
         }
     }
 }
 
 // Uso — combinando os dois livremente
-let playerV2 = PlayerMusicaV2(estrategia: ReproducaoNormal())
+let playerV2 = MusicPlayerV2(strategy: NormalPlayback())
 
 print("--- Normal + Crossfade ---")
-playerV2.trocarEstrategia(ReproducaoComCrossfade())
-playerV2.tocar(iterator: playlist.iteratorNormal())
+playerV2.changeStrategy(CrossfadePlayback())
+playerV2.play(iterator: playlist.normalIterator())
 
 print("--- Aleatório + Pré-carregamento ---")
-playerV2.trocarEstrategia(PreCarregamento())
-playerV2.tocar(iterator: playlist.iteratorAleatorio())
+playerV2.changeStrategy(Preload())
+playerV2.play(iterator: playlist.shuffleIterator())
 
 print("--- Reverso + Normal ---")
-playerV2.trocarEstrategia(ReproducaoNormal())
-playerV2.tocar(iterator: playlist.iteratorReverso())
+playerV2.changeStrategy(NormalPlayback())
+playerV2.play(iterator: playlist.reverseIterator())
+
+//: [Next](@next)

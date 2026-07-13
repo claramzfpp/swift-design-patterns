@@ -2,232 +2,245 @@
 
 import Foundation
 
-// Problema 1: estado interno completamente exposto
-// Problema 2: quem salva precisa conhecer cada detalhe interno do personagem
-// Problema 3: se o Personagem mudar internamente, o sistema de save quebra
+/*
+ Memento Pattern — captura e externaliza o estado interno de um objeto sem violar seu encapsulamento.
+ Problema que resolve: permite salvar e restaurar o estado de um objeto (undo, save/load)
+ sem expor suas propriedades internas nem acoplar quem guarda o estado aos detalhes do objeto.
+*/
 
-class Personagem {
-    var nome: String        // exposto
-    var vida: Int           // exposto
+// ========================================================
+// ANTES — sem o pattern (o problema)
+// ========================================================
+// Problema 1: estado interno completamente exposto.
+// Problema 2: quem salva precisa conhecer cada detalhe interno do personagem.
+// Problema 3: se o Character mudar internamente, o sistema de save quebra.
+
+class CharacterBefore {
+    var name: String        // exposto
+    var health: Int         // exposto
     var mana: Int           // exposto
-    var nivel: Int          // exposto
-    var ouro: Int           // exposto
-    var inventario: [String] // exposto
-    var posicaoX: Double    // exposto
-    var posicaoY: Double    // exposto
-    
-    init(nome: String) {
-        self.nome = nome
-        self.vida = 100
+    var level: Int          // exposto
+    var gold: Int           // exposto
+    var inventory: [String] // exposto
+    var positionX: Double   // exposto
+    var positionY: Double   // exposto
+
+    init(name: String) {
+        self.name = name
+        self.health = 100
         self.mana = 50
-        self.nivel = 1
-        self.ouro = 0
-        self.inventario = []
-        self.posicaoX = 0
-        self.posicaoY = 0
+        self.level = 1
+        self.gold = 0
+        self.inventory = []
+        self.positionX = 0
+        self.positionY = 0
     }
 }
 
-// Sistema de save precisa conhecer TUDO do Personagem
-class SistemaSave {
+// Sistema de save precisa conhecer TUDO do Character
+class SaveSystemBefore {
     struct SaveData {
-        var nome: String
-        var vida: Int
+        var name: String
+        var health: Int
         var mana: Int
-        var nivel: Int
-        var ouro: Int
-        var inventario: [String]
-        var posicaoX: Double
-        var posicaoY: Double
+        var level: Int
+        var gold: Int
+        var inventory: [String]
+        var positionX: Double
+        var positionY: Double
     }
-    
+
     var slots: [Int: SaveData] = [:]
-    
-    func salvar(personagem: Personagem, slot: Int) {
+
+    func save(character: CharacterBefore, slot: Int) {
         // acessa cada propriedade interna diretamente
         slots[slot] = SaveData(
-            nome: personagem.nome,
-            vida: personagem.vida,
-            mana: personagem.mana,
-            nivel: personagem.nivel,
-            ouro: personagem.ouro,
-            inventario: personagem.inventario,
-            posicaoX: personagem.posicaoX,
-            posicaoY: personagem.posicaoY
+            name: character.name,
+            health: character.health,
+            mana: character.mana,
+            level: character.level,
+            gold: character.gold,
+            inventory: character.inventory,
+            positionX: character.positionX,
+            positionY: character.positionY
         )
-        print("💾 Salvo no slot \(slot)")
+        print("Salvo no slot \(slot)")
     }
-    
-    func carregar(personagem: Personagem, slot: Int) {
-        guard let save = slots[slot] else { return }
+
+    func load(character: CharacterBefore, slot: Int) {
+        guard let saveData = slots[slot] else { return }
         // modifica cada propriedade interna diretamente
-        personagem.nome = save.nome
-        personagem.vida = save.vida
-        personagem.mana = save.mana
-        personagem.nivel = save.nivel
-        personagem.ouro = save.ouro
-        personagem.inventario = save.inventario
-        personagem.posicaoX = save.posicaoX
-        personagem.posicaoY = save.posicaoY
-        print("📂 Carregado slot \(slot)")
+        character.name = saveData.name
+        character.health = saveData.health
+        character.mana = saveData.mana
+        character.level = saveData.level
+        character.gold = saveData.gold
+        character.inventory = saveData.inventory
+        character.positionX = saveData.positionX
+        character.positionY = saveData.positionY
+        print("Carregado slot \(slot)")
     }
 }
 
 // Uso
-let heroi = Personagem(nome: "Arthas")
-let save = SistemaSave()
+let hero = CharacterBefore(name: "Arthas")
+let saveSystem = SaveSystemBefore()
 
-heroi.vida = 80
-heroi.nivel = 5
-heroi.ouro = 200
-heroi.inventario = ["Espada", "Escudo"]
-heroi.posicaoX = 150
-heroi.posicaoY = 320
+hero.health = 80
+hero.level = 5
+hero.gold = 200
+hero.inventory = ["Espada", "Escudo"]
+hero.positionX = 150
+hero.positionY = 320
 
-save.salvar(personagem: heroi, slot: 1)
+saveSystem.save(character: hero, slot: 1)
 
 // jogador morre e perde progresso
-heroi.vida = 0
-heroi.ouro = 0
-heroi.inventario = []
+hero.health = 0
+hero.gold = 0
+hero.inventory = []
 
 // carrega o save
-save.carregar(personagem: heroi, slot: 1)
-// heroi.vida = 80, heroi.ouro = 200... mas o SistemaSave
+saveSystem.load(character: hero, slot: 1)
+// hero.health = 80, hero.gold = 200... mas o SaveSystem
 // precisou conhecer TUDO para fazer isso
 
-// Três problemas claros: Personagem com todas as propriedades públicas, SistemaSave acoplado a cada detalhe interno,
-// e se você adicionar uma propriedade nova ao Personagem (ex: experiencia: Int), precisa abrir SistemaSave e atualizar em dois lugares.
+// Três problemas claros: Character com todas as propriedades públicas, SaveSystem acoplado a cada detalhe interno,
+// e se você adicionar uma propriedade nova ao Character (ex: experience: Int), precisa abrir SaveSystem e atualizar em dois lugares.
 
-//-----------------------------------------------
+///--------------------------------------------------------------------------------------------------------------------------
 
-// 1. O Memento — snapshot opaco do estado do Personagem
-// SistemaSave não sabe o que está dentro — só guarda e devolve
-class PersonagemMemento {
-    // fileprivate — só o Personagem (mesmo arquivo) acessa
-    fileprivate let nome: String
-    fileprivate let vida: Int
+// ========================================================
+// DEPOIS — com o Memento Pattern
+// ========================================================
+
+// 1. O Memento — snapshot opaco do estado do Character.
+//    O SaveSystem não sabe o que está dentro — só guarda e devolve.
+class CharacterMemento {
+    // fileprivate — só o Character (mesmo arquivo) acessa
+    fileprivate let name: String
+    fileprivate let health: Int
     fileprivate let mana: Int
-    fileprivate let nivel: Int
-    fileprivate let ouro: Int
-    fileprivate let inventario: [String]
-    fileprivate let posicaoX: Double
-    fileprivate let posicaoY: Double
+    fileprivate let level: Int
+    fileprivate let gold: Int
+    fileprivate let inventory: [String]
+    fileprivate let positionX: Double
+    fileprivate let positionY: Double
     fileprivate let timestamp: Date
-    
+
     fileprivate init(
-        nome: String, vida: Int, mana: Int, nivel: Int,
-        ouro: Int, inventario: [String], posicaoX: Double, posicaoY: Double
+        name: String, health: Int, mana: Int, level: Int,
+        gold: Int, inventory: [String], positionX: Double, positionY: Double
     ) {
-        self.nome = nome
-        self.vida = vida
+        self.name = name
+        self.health = health
         self.mana = mana
-        self.nivel = nivel
-        self.ouro = ouro
-        self.inventario = inventario
-        self.posicaoX = posicaoX
-        self.posicaoY = posicaoY
+        self.level = level
+        self.gold = gold
+        self.inventory = inventory
+        self.positionX = positionX
+        self.positionY = positionY
         self.timestamp = Date()
     }
 }
 
-// 2. O Originator — o Personagem cria e restaura seus próprios Mementos
-class PersonagemV2 {
-    private var nome: String      // privado — encapsulado
-    private var vida: Int
+// 2. O Originator — o Character cria e restaura seus próprios Mementos.
+class Character {
+    private var name: String      // privado — encapsulado
+    private var health: Int
     private var mana: Int
-    private var nivel: Int
-    private var ouro: Int
-    private var inventario: [String]
-    private var posicaoX: Double
-    private var posicaoY: Double
-    
-    init(nome: String) {
-        self.nome = nome
-        self.vida = 100
+    private var level: Int
+    private var gold: Int
+    private var inventory: [String]
+    private var positionX: Double
+    private var positionY: Double
+
+    init(name: String) {
+        self.name = name
+        self.health = 100
         self.mana = 50
-        self.nivel = 1
-        self.ouro = 0
-        self.inventario = []
-        self.posicaoX = 0
-        self.posicaoY = 0
+        self.level = 1
+        self.gold = 0
+        self.inventory = []
+        self.positionX = 0
+        self.positionY = 0
     }
-    
-    func ganharExperiencia() {
-        nivel += 1
-        vida = 100
+
+    func gainExperience() {
+        level += 1
+        health = 100
         mana = 100
-        print("⬆️ Level up! Nível \(nivel)")
+        print("Level up! Nível \(level)")
     }
-    
-    func coletarOuro(_ quantidade: Int) {
-        ouro += quantidade
-        print("💰 +\(quantidade) ouro (total: \(ouro))")
+
+    func collectGold(_ amount: Int) {
+        gold += amount
+        print("+\(amount) ouro (total: \(gold))")
     }
-    
-    func adicionarItem(_ item: String) {
-        inventario.append(item)
-        print("🎒 Item adicionado: \(item)")
+
+    func addItem(_ item: String) {
+        inventory.append(item)
+        print("Item adicionado: \(item)")
     }
-    
-    func mover(x: Double, y: Double) {
-        posicaoX = x
-        posicaoY = y
+
+    func move(x: Double, y: Double) {
+        positionX = x
+        positionY = y
     }
-    
-    func sofrerDano(_ dano: Int) {
-        vida = max(0, vida - dano)
-        print("💔 Dano: \(dano) | Vida restante: \(vida)")
+
+    func takeDamage(_ damage: Int) {
+        health = max(0, health - damage)
+        print("Dano: \(damage) | Vida restante: \(health)")
     }
-    
-    func exibirStatus() {
+
+    func showStatus() {
         print("""
-        👤 \(nome) | Nível \(nivel)
-        ❤️  Vida: \(vida) | 💧 Mana: \(mana)
-        💰 Ouro: \(ouro)
-        🎒 Inventário: \(inventario)
-        📍 Posição: (\(posicaoX), \(posicaoY))
+        \(name) | Nível \(level)
+        Vida: \(health) | Mana: \(mana)
+        Ouro: \(gold)
+        Inventário: \(inventory)
+        Posição: (\(positionX), \(positionY))
         """)
     }
-    
+
     // Originator cria seu próprio Memento
-    func salvarEstado() -> PersonagemMemento {
-        return PersonagemMemento(
-            nome: nome, vida: vida, mana: mana, nivel: nivel,
-            ouro: ouro, inventario: inventario,
-            posicaoX: posicaoX, posicaoY: posicaoY
+    func saveState() -> CharacterMemento {
+        return CharacterMemento(
+            name: name, health: health, mana: mana, level: level,
+            gold: gold, inventory: inventory,
+            positionX: positionX, positionY: positionY
         )
     }
-    
+
     // Originator restaura a partir do Memento
-    func restaurarEstado(_ memento: PersonagemMemento) {
-        nome = memento.nome
-        vida = memento.vida
+    func restoreState(_ memento: CharacterMemento) {
+        name = memento.name
+        health = memento.health
         mana = memento.mana
-        nivel = memento.nivel
-        ouro = memento.ouro
-        inventario = memento.inventario
-        posicaoX = memento.posicaoX
-        posicaoY = memento.posicaoY
-        print("📂 Estado restaurado")
+        level = memento.level
+        gold = memento.gold
+        inventory = memento.inventory
+        positionX = memento.positionX
+        positionY = memento.positionY
+        print("Estado restaurado")
     }
 }
 
-// 3. O Caretaker — guarda Mementos sem saber o que está dentro
-class SistemaSaveV2 {
-    private var slots: [Int: PersonagemMemento] = [:]
-    
+// 3. O Caretaker — guarda Mementos sem saber o que está dentro.
+class SaveSystem {
+    private var slots: [Int: CharacterMemento] = [:]
+
     // não sabe o que está dentro do Memento — só guarda
-    func salvar(memento: PersonagemMemento, slot: Int) {
+    func save(memento: CharacterMemento, slot: Int) {
         slots[slot] = memento
-        print("💾 Salvo no slot \(slot) — \(memento.timestamp)")
+        print("Salvo no slot \(slot) — \(memento.timestamp)")
     }
-    
-    func carregar(slot: Int) -> PersonagemMemento? {
+
+    func load(slot: Int) -> CharacterMemento? {
         return slots[slot]
     }
-    
-    func listarSlots() {
+
+    func listSlots() {
         slots.forEach { slot, memento in
             print("Slot \(slot): salvo em \(memento.timestamp)")
         }
@@ -235,51 +248,50 @@ class SistemaSaveV2 {
 }
 
 // 4. Uso
-let heroiV2 = PersonagemV2(nome: "Arthas")
-let saveV2 = SistemaSaveV2()
+let heroV2 = Character(name: "Arthas")
+let saveSystemV2 = SaveSystem()
 
 // jogador avança no jogo
-heroiV2.ganharExperiencia()
-heroiV2.coletarOuro(200)
-heroiV2.adicionarItem("Espada Lendária")
-heroiV2.mover(x: 150, y: 320)
+heroV2.gainExperience()
+heroV2.collectGold(200)
+heroV2.addItem("Espada Lendária")
+heroV2.move(x: 150, y: 320)
 
 print("\n--- Status antes de salvar ---")
-heroiV2.exibirStatus()
+heroV2.showStatus()
 
-// salva o progresso — SistemaSave não precisa saber nada do Personagem
-saveV2.salvar(memento: heroiV2.salvarEstado(), slot: 1)
+// salva o progresso — SaveSystem não precisa saber nada do Character
+saveSystemV2.save(memento: heroV2.saveState(), slot: 1)
 
 // jogador continua e as coisas vão mal
-heroiV2.sofrerDano(80)
-heroiV2.sofrerDano(30) // vida = 0
-heroiV2.adicionarItem("Item Inútil")
+heroV2.takeDamage(80)
+heroV2.takeDamage(30) // vida = 0
+heroV2.addItem("Item Inútil")
 
 print("\n--- Status após tomar dano ---")
-heroiV2.exibirStatus()
+heroV2.showStatus()
 
-// carrega o save — só o Personagem sabe como restaurar o estado
-if let memento = saveV2.carregar(slot: 1) {
-    heroiV2.restaurarEstado(memento)
+// carrega o save — só o Character sabe como restaurar o estado
+if let memento = saveSystemV2.load(slot: 1) {
+    heroV2.restoreState(memento)
 }
 
 print("\n--- Status após carregar save ---")
-heroiV2.exibirStatus()
+heroV2.showStatus()
 
 // múltiplos slots de save
-heroiV2.ganharExperiencia()
-heroiV2.coletarOuro(500)
-saveV2.salvar(memento: heroiV2.salvarEstado(), slot: 2)
+heroV2.gainExperience()
+heroV2.collectGold(500)
+saveSystemV2.save(memento: heroV2.saveState(), slot: 2)
 
 print("\n--- Slots disponíveis ---")
-saveV2.listarSlots()
+saveSystemV2.listSlots()
 
 // ir direto para o slot 1
-if let memento = saveV2.carregar(slot: 1) {
-    heroiV2.restaurarEstado(memento)
+if let memento = saveSystemV2.load(slot: 1) {
+    heroV2.restoreState(memento)
 }
 print("\n--- Voltou para o slot 1 ---")
-heroiV2.exibirStatus()
-
+heroV2.showStatus()
 
 //: [Next](@next)
