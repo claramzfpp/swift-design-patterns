@@ -13,6 +13,7 @@
         <page name='Decorator'/>
         <page name='Facade'/>
         <page name='Flyweight'/>
+        <page name='Proxy'/>
         <page name='ChainOfResponsibility'/>
         <page name='Command'/>
         <page name='Iterator'/>
