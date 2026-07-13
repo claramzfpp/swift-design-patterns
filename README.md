@@ -54,16 +54,20 @@ As explicações estão em **português** e os identificadores (classes, método
 | [Decorator](DesignPatternsPlayground.playground/Pages/Decorator.xcplaygroundpage/Contents.swift) | Adiciona comportamento empilhando "embrulhos", sem modificar o objeto original. |
 | [Facade](DesignPatternsPlayground.playground/Pages/Facade.xcplaygroundpage/Contents.swift) | Uma interface simples que esconde a orquestração de vários subsistemas. |
 | [Flyweight](DesignPatternsPlayground.playground/Pages/Flyweight.xcplaygroundpage/Contents.swift) | Compartilha o estado comum entre muitos objetos para economizar memória. |
+| [Proxy](DesignPatternsPlayground.playground/Pages/Proxy.xcplaygroundpage/Contents.swift) | Controla o acesso a um objeto (carregamento preguiçoso, permissão) através de um substituto. |
 
 ### Comportamentais
 | Página | Ideia |
 |--------|-------|
 | [Chain of Responsibility](DesignPatternsPlayground.playground/Pages/ChainOfResponsibility.xcplaygroundpage/Contents.swift) | Passa a requisição por uma corrente de handlers até um deles tratar. |
 | [Command](DesignPatternsPlayground.playground/Pages/Command.xcplaygroundpage/Contents.swift) | Encapsula uma ação como objeto, injetável em quem a executa. |
+| [Iterator](DesignPatternsPlayground.playground/Pages/Iterator.xcplaygroundpage/Contents.swift) | Percorre uma coleção sem expor a estrutura interna dela. |
 | [Mediator](DesignPatternsPlayground.playground/Pages/Mediator.xcplaygroundpage/Contents.swift) | Centraliza a comunicação entre componentes num mediador, em vez de eles se referenciarem direto. |
+| [Memento](DesignPatternsPlayground.playground/Pages/Memento.xcplaygroundpage/Contents.swift) | Salva e restaura o estado de um objeto sem expor seus detalhes internos. |
 | [Observer](DesignPatternsPlayground.playground/Pages/Observer.xcplaygroundpage/Contents.swift) | Notifica automaticamente vários interessados quando um objeto muda de estado. |
 | [State](DesignPatternsPlayground.playground/Pages/State.xcplaygroundpage/Contents.swift) | O objeto muda de comportamento conforme o estado, sem if/else gigante. |
 | [Strategy](DesignPatternsPlayground.playground/Pages/Strategy.xcplaygroundpage/Contents.swift) | Algoritmos intercambiáveis injetados em tempo de execução. |
+| [Template Method](DesignPatternsPlayground.playground/Pages/TemplateMethod.xcplaygroundpage/Contents.swift) | Define o esqueleto de um algoritmo e deixa as subclasses preencherem passos específicos. |
 | [Visitor](DesignPatternsPlayground.playground/Pages/Visitor.xcplaygroundpage/Contents.swift) | Adiciona novas operações a uma hierarquia de tipos sem modificá-los. |
 
 ### Arquitetural
